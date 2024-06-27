@@ -1,0 +1,152 @@
+-- trabajamos en la db colegio
+use colegio
+
+-- creamos las colecciones
+db.createCollection("empleados");
+db.createCollection("estudiantes");
+db.createCollection("tipos_documento");
+db.createCollection("cursos");
+db.createCollection("cursos_asignaturas");
+
+--insertamos registros en empleados
+db.empleados.insertMany([
+  {
+    nombre: "Carlos",
+    apellido: "Ramírez",
+    salario: 2500000,
+    correo_electronico: "carlos.ramirez@correo.com",
+    numero_documento: "10006",
+    rol: "profesor",
+    tipo_documento: "CC",
+    asignatura: "Matematicas"
+  },
+  {
+    nombre: "Andrea",
+    apellido: "Suárez",
+    salario: 2200000,
+    correo_electronico: "andrea.suarez@correo.com",
+    numero_documento: "10008",
+    rol: "profesor",
+    tipo_documento: "CC",
+    asignaturas: "Ingles"
+  },
+  {
+    nombre: "Pedro",
+    apellido: "López",
+    salario: 1500000,
+    correo_electronico: "pedro.lopez@correo.com",
+    numero_documento: "10009",
+    rol: "profesor",
+    tipo_documento: "CE",
+    asignatura: "ciencias"
+  }
+])
+
+-- insertamos registros en estudiantes
+db.estudiantes.insertOne({"nombre": "nicoLas", apellido: "martinez", tipo_documento: "CC", numero_documento: "1038262934", fecha_nacimiento: new ISODate("2010-05-18T14:10:30Z"), telefono: "3175495355", email: "nicolasmarcar2006@gmail.com", curso: "sexto"})
+
+db.estudiantes.insertOne({"nombre": "Laura", "apellido": "Gomez", "tipo_documento": "CC", "numero_documento": "1038262935", "fecha_nacimiento": new ISODate("2011-08-22T09:25:00Z"), "telefono": "3165495355", "email": "lauragomez2011@gmail.com", curso: "sexto"})
+
+db.estudiantes.insertOne({"nombre": "Carlos", "apellido": "Perez", "tipo_documento": "CC", "numero_documento": "1038262936", "fecha_nacimiento": new ISODate("2009-03-15T11:45:20Z"), "telefono": "3155495355", "email": "carlosperez2009@gmail.com", curso: "septimo"})
+
+
+-- insertamos registros en tipos_documento
+db.tipos_documento.insertMany([
+  {
+    nombre: "Cédula Ciudadania",
+    abreviatura: "CC"
+  },
+  {
+    nombre: "Tarjeta de Identidad",
+    abreviatura: "TI"
+  },
+  {
+    nombre: "Cédula de Extranjería",
+    abreviatura: "CE"
+  }
+])
+
+-- insertamos registros en curos 
+db.cursos.insertOne({"nombre": "sexto","profesor_encargado": "David Medina", "jornada": "Mañana"})
+
+db.cursos.insertOne({"nombre": "septimo","profesor_encargado": "Pedro López", "jornada": "Mañana"})
+
+db.cursos.insertOne({"nombre": "octavo","profesor_encargado": "Carlos Ramírez", "jornada": "Tarde"})
+
+db.cursos.insertOne({"nombre": "noveno","profesor_encargado": "María Gómez", "jornada": "Tarde"})
+
+db.cursos.insertOne({"nombre": "decimo","profesor_encargado": "Andrea Suárez", "jornada": "Mañana"})
+
+--insertamos registros en cursos_asignaturas
+
+db.cursos_asignaturas.insertOne({"asignatura":"Matematicas", curso:"sexto", docente: "Carlos"});
+
+db.cursos_asignaturas.insertOne({"asignatura":"Ciencias", curso:"sexto", docente: "Pedro"});
+
+db.cursos_asignaturas.insertOne({"asignatura":"Ingles", curso:"septimo", docente: "Andrea"});
+
+
+-- Ver listado de estudiantes de un grupo en especifico
+db.estudiantes.find({ curso: "sexto" })
+
+-- Ver listado de estudiantes que ven una asignatura en especifico
+db.cursos_asignaturas.aggregate([{
+    $match: { asignatura: "Matematicas" }
+  },
+  {
+    $lookup: {
+      from: "estudiantes",
+      localField: "curso",
+      foreignField: "curso",
+      as: "profesor y estudiantes"
+    }
+  }
+])
+
+-- Ver listado de profesores que le dan clase a un estudiante en especifico
+db.estudiantes.aggregate([
+  {
+    $match: { numero_documento: "1038262934" }
+  },
+  {
+    $lookup: {
+      from: "cursos_asignaturas",
+      let: { curso: "$curso" },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $and: [
+                { $eq: ["$curso", "$$curso"] }
+              ]
+            }
+          }
+        }
+      ],
+      as: "asignaturas_grupo"
+    }
+  },
+  {
+    $lookup: {
+      from: "empleados",
+      localField: "cursos_asignaturas.docente",
+      foreignField: "numero_documento",
+      as: "docente_informacion"
+    }
+  }
+])
+
+-- Ver listado de grupos ordenados en orden descendente por la cantidad de estudiantes inscritos
+db.estudiantes.aggregate([
+    {
+      $group: {
+        _id: {
+          curso: "$curso"
+        },
+        Estudiantes: { $sum: 1 }
+      }
+    },
+    {
+      $sort: { Estudiantes: -1 }
+    }
+  ])
