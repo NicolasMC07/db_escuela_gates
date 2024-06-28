@@ -1,0 +1,88 @@
+use noticiasGates;
+
+db.createCollection("noticias");
+
+
+db.createCollection("autores");
+
+-- INSERTAR REGISTROS EN AUTORES
+
+db.autores.insertMany([
+  { _id: 1, nombre: "Pedro Martinez", email: "pedro9839@gmail.com" },
+  { _id: 2, nombre: "Nicolas Cardona", email: "nicolas8382@gmail.com" },
+  { _id: 3,nombre: "Juan Guarin", email: "juan8287@gmail.com" },
+  { _id: 4, nombre: "Jose Cano", email: "jose82382@gmail.com" },
+  { _id: 5, nombre: "David Velez", email: "david15626@gmail.com" }
+]);
+
+-- INSERTAR REGISTROS EN NOTICIAS
+
+db.noticias.insertMany([
+  { titulo: "Reformas Políticas en América Latina", fecha: ISODate("2024-01-10T00:00:00Z"), autorId: 1 },
+  { titulo: "La Final del Campeonato Nacional", fecha: ISODate("2024-01-11T00:00:00Z"), autorId: 2 },
+  { titulo: "Crisis Humanitaria en Medio Oriente", fecha: ISODate("2024-01-12T00:00:00Z"), autorId: 3 },
+  { titulo: "Auge del Mercado de Criptomonedas", fecha: ISODate("2024-01-13T00:00:00Z"), autorId: 4 },
+  { titulo: "Innovaciones Tecnológicas en 2024", fecha: ISODate("2024-01-14T00:00:00Z"), autorId: 5 },
+  { titulo: "Elecciones Presidenciales en Estados Unidos", fecha: ISODate("2024-01-15T00:00:00Z"), autorId: 1 },
+  { titulo: "Resultados de la Liga de Campeones", fecha: ISODate("2024-01-16T00:00:00Z"), autorId: 2 },
+  { titulo: "Acuerdo de Paz en África", fecha: ISODate("2024-01-17T00:00:00Z"), autorId: 1 },
+  { titulo: "Previsiones Económicas para 2024", fecha: ISODate("2024-01-18T00:00:00Z"), autorId: 3 },
+  { titulo: "Avances en Inteligencia Artificial", fecha: ISODate("2024-01-19T00:00:00Z"), autorId: 1 },
+  { titulo: "Conflictos Políticos en Asia", fecha: ISODate("2024-01-20T00:00:00Z"), autorId: 5 },
+  { titulo: "Los Mejores Jugadores del Año", fecha: ISODate("2024-01-21T00:00:00Z"), autorId: 4 },
+  { titulo: "Refugiados en Europa", fecha: ISODate("2024-01-22T00:00:00Z"), autorId: 1 },
+  { titulo: "Impacto del Cambio Climático en la Economía", fecha: ISODate("2024-01-23T00:00:00Z"), autorId: 2 },
+  { titulo: "Nuevos Dispositivos Tecnológicos", fecha: ISODate("2024-01-24T00:00:00Z"), autorId: 4 },
+  { titulo: "Debates Presidenciales en América Latina", fecha: ISODate("2024-01-25T00:00:00Z"), autorId: 3 },
+  { titulo: "Campeonatos Internacionales de Fútbol", fecha: ISODate("2024-01-26T00:00:00Z"), autorId: 5 },
+  { titulo: "Situación en la Frontera Sur de Estados Unidos", fecha: ISODate("2024-01-27T00:00:00Z"), autorId: 1 },
+  { titulo: "Mercados Bursátiles en 2024", fecha: ISODate("2024-01-28T00:00:00Z"), autorId: 4 },
+  { titulo: "Tendencias en Desarrollo de Software", fecha: ISODate("2024-01-29T00:00:00Z"), autorId: 1 }
+]);
+
+-- Obtener el listado de noticias de un autor, en donde el campo de búsqueda o filtro del autor es su email.
+
+db.noticias.aggregate([
+    {
+      $lookup: {
+        from: "autores",
+        localField: "autorId",
+        foreignField: "_id",
+        as: "noti_autor"
+      }
+    },
+    {
+       $match: { "noti_autor.email": "nicolas8382@gmail.com" }
+    },
+  ]);
+
+-- Obtener el listado de noticias de un autor, en donde el campo de búsqueda o filtro del autor es su nombre, los resultados deben salir
+  de forma ordenada por el campo fecha de publicación de forma descendente, es decir primero se ven las más recientes.
+
+  db.noticias.aggregate([
+    {
+      $lookup: {
+        from: "autores",
+        localField: "autorId",
+        foreignField: "_id",
+        as: "noti_autor"
+      }
+    },
+    {
+      $match: { "noti_autor.nombre": "Nicolas Cardona" }
+    },
+    {
+      $sort: { fecha: -1 }
+    }
+  ]);
+  
+  -- Obtener un listado de noticias filtrado por un rango de fechas, por ejemplo todas las noticias entre el 10-01-2024 y el 30-01-2024
+
+  db.noticias.find({
+    fecha: {
+      $gte: new Date("2024-01-10"),
+      $lte: new Date("2024-01-30")
+    }
+  })
+  
+  CONECCION_DB: mongodb+srv://nicolasmarcar2006:aQKChK7rUB7h3RvG@cluster0.89satx5.mongodb.net/
